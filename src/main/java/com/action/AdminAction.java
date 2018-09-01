@@ -39,7 +39,7 @@ public class AdminAction {
 		AdminServer = adminServer;
 	}
 
-	// 登录
+	// 管理员登录
 	@ResponseBody
 	@RequestMapping("/login.do")
 	public String login(String loginId, String passWord, HttpServletResponse response, HttpSession session) {
@@ -164,5 +164,6 @@ public class AdminAction {
 		admin.setRemark(bz);
 		return AdminServer.adminupdateMysql(admin);
 	}
+	
 
 }
