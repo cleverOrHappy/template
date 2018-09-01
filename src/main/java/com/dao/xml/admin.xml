@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dao.AdminDao">
+	<!-- 登录 -->
+	<select id="logionselect" resultType="com.entity.Admin">
+		SELECT
+		accountId,
+		accountName,
+		accountPassWord,
+		remark,
+		createAccountId,
+		createDate
+		FROM
+		admin
+		WHERE
+		accountId = #{accountId}
+		AND
+		accountPassWord=#{accountPassWord}
+	</select>
+	<!-- 查询 -->
+	<select id="inquery" resultType="com.entity.Admin">
+		select * from admin where 1=1
+		<if test="array[2]!=''">
+		AND	accountName=#{array[2]}
+		</if>
+		limit #{array[0]},#{array[1]}
+	</select>
+	<!-- 查询 总数 -->
+	<select id="count" resultType="com.entity.Admin">
+		select * from  admin where 1=1
+		<if test="array[0]!=''">
+			AND accountName=#{array[0]}
+		</if>
+	</select>
+	<!-- 增加 -->
+	<insert id="add" keyProperty="accountId">
+		INSERT INTO
+		admin(accountId,accountName,remark,createDate,accountPassWord,createAccountId)
+		VALUES(#{accountId},#{accountName},#{remark},NOW(),#{accountPassWord},#{createAccountId})
+	</insert>
+	<!-- 删除 -->
+	<delete id="delete">
+		delete from admin where accountId=#{array[0]}
+	</delete>
+	<!-- 修改查询 -->
+	<select id="update" resultType="com.entity.Admin">
+		select * from admin where
+		accountId=#{array[0]}
+	</select>
+	<!-- 修改 -->
+	<update id="updatemysql">
+		update admin set
+		accountName=#{accountName},remark=#{remark},accountPassWord=#{accountPassWord}
+		where accountId=#{accountId}
+	</update>
+</mapper>

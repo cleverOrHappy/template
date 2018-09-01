@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:tool="http://www.springframework.org/schema/tool"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:cache="http://www.springframework.org/schema/cache"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" 
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+		      http://www.springframework.org/schema/beans/spring-beans.xsd
+		      http://www.w3.org/2001/XMLSchema-instance
+		      http://www.w3.org/2001/XMLSchema-instance/spring-instance.xsd
+		      http://www.springframework.org/schema/tool
+		      http://www.springframework.org/schema/tool/spring-tool.xsd
+		      http://www.springframework.org/schema/aop
+		      http://www.springframework.org/schema/aop/spring-aop.xsd
+		      http://www.springframework.org/schema/jdbc
+		      http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+		      http://www.springframework.org/schema/tx
+		      http://www.springframework.org/schema/tx/spring-tx.xsd
+		      http://www.springframework.org/schema/cache
+		      http://www.springframework.org/schema/cache/spring-cache.xsd
+		      http://www.springframework.org/schema/util
+		      http://www.springframework.org/schema/util/spring-util.xsd
+		      http://www.springframework.org/schema/context
+		      http://www.springframework.org/schema/context/spring-context.xsd
+		      http://www.springframework.org/schema/mvc
+		      http://www.springframework.org/schema/mvc/spring-mvc.xsd
+		       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		      ">
+	<!-- spring -->
+	<!-- 开启注解 -->
+	<aop:aspectj-autoproxy />
+
+	<context:annotation-config />
+	<!-- 扫描 base-package 下所有的包,给予自动注入 -->
+	<context:component-scan base-package="com" />
+
+	<!-- 配置c3p0连接池属性 -->
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource"
+		destroy-method="close">
+		<property name="driverClass" value="com.mysql.jdbc.Driver" />
+		<property name="jdbcUrl" value="jdbc:mysql://127.0.0.1/template?characterEncoding=utf-8" />
+		<property name="user" value="root" />
+		<property name="password" value="root" />
+		<!-- 队列中的最小连接数 -->
+		<property name="minPoolSize" value="15"></property>
+		<!-- 队列中的最大连接数 -->
+		<property name="maxPoolSize" value="25"></property>
+		<!-- 当连接耗尽时创建的连接数 -->
+		<property name="acquireIncrement" value="15"></property>
+		<!-- 等待时间 -->
+		<property name="checkoutTimeout" value="10000"></property>
+		<!-- 初始化连接数 -->
+		<property name="initialPoolSize" value="20"></property>
+		<!-- 最大空闲时间，超出时间连接将被丢弃 -->
+		<property name="maxIdleTime" value="20"></property>
+		<!-- 每隔60秒检测空闲连接 -->
+		<property name="idleConnectionTestPeriod" value="60000"></property>
+	</bean>
+
+	<!-- springMVC -->
+	<!-- 视图解析器：将逻辑视图转发到对应的物理视图 -->
+	<!-- <bean
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/WEB-INF/view/" />
+		<property name="suffix" value=".jsp" />
+	</bean> -->
+
+	<!--将非mapping配置下的请求交给默认的Servlet来处理 -->
+	<mvc:default-servlet-handler />
+	<!--如果添加了默认servlet，mvc请求将无效，需要添加annotation-driven -->
+	<mvc:annotation-driven />
+
+	<!-- json配置 -->
+	<bean id="stringConverter"
+		class="org.springframework.http.converter.StringHttpMessageConverter">
+		<!-- 将StringHttpMessageConverter转换成枚举类型 -->
+		<property name="supportedMediaTypes">
+			<list>
+				<!-- 然后将枚举类型转换成UTF-8类型 -->
+				<value>text/plain;charset=UTF-8</value>
+			</list>
+		</property>
+	</bean>
+	<!-- 转换成MappingJackson2HttpMessageConverter -->
+	<bean id="jsonConverter"
+		class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter"></bean>
+	<!--然后在用适配器 AnnotationMethodHandlerAdapter去处理json -->
+	<bean
+		class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter">
+		<property name="messageConverters">
+			<list>
+				<!-- 适配器中需要调用StringHttpMessageConverter和MappingJackson2HttpMessageConverter -->
+				<ref bean="stringConverter" />
+				<ref bean="jsonConverter" />
+			</list>
+		</property>
+	</bean>
+
+	<!-- Mybatis -->
+	<!--(第一种使用) (第二种使用) Spring和Mybatis完美整合 (第三种只使用这一个) -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<!-- 自动扫描mapping.xml文件,**表示代替查找,也可以在mybatis中单独查找指定xml文件 -->
+		<property name="mapperLocations" value="classpath:com/dao/xml/*.xml" />
+	</bean>
+
+
+	
+
+	<!-- mybatis spring sqlSessionTemplate,使用时直接让spring注入即可 (第二种使用) -->
+	<bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+		<constructor-arg index="0" ref="sqlSessionFactory" />
+	</bean>
+
+	<!-- Mybatis事物管理 -->
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<aop:config>
+		<aop:pointcut id="serviceMethod"
+			expression="execution(* com.sever.impl.*.*(..))" />
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="serviceMethod" />
+	</aop:config>
+
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="*" propagation="REQUIRED" />
+		</tx:attributes>
+	</tx:advice>
+	<!-- 实现拦截器 -->
+	 <mvc:interceptors>
+        <mvc:interceptor>
+            <mvc:mapping path="/request*.do"/>
+            <bean class="com.util.TestInterceptor"/>        
+        </mvc:interceptor>
+    </mvc:interceptors>
+    
+    
+  
+  
+
+
+</beans>

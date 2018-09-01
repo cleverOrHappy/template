@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dao.HomDao">
+   <!-- 查询树形结构 -->
+	<select id="navselect"  resultType="com.entity.Nav">
+	   select * from nav where tid=#{id}
+	</select>
+</mapper>
